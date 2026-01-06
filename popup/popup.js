@@ -43,6 +43,9 @@ async function init() {
   // Check if current tab is YouTube
   await checkYouTubePage();
 
+  // Load saved summary if available
+  await loadSavedSummary();
+
   // Setup event listeners
   setupEventListeners();
 }
@@ -115,6 +118,36 @@ async function injectContentScript(tabId) {
 }
 
 /**
+ * Load saved summary from storage if it matches current video
+ */
+async function loadSavedSummary() {
+  try {
+    if (!currentTab || !currentTab.url || !isYouTubePage) {
+      return;
+    }
+
+    const { lastSummary } = await chrome.storage.local.get(['lastSummary']);
+
+    if (!lastSummary) {
+      console.log('[Summora Popup] No saved summary found');
+      return;
+    }
+
+    // Check if the saved summary is for the current video
+    if (lastSummary.videoUrl === currentTab.url) {
+      console.log('[Summora Popup] Found saved summary for current video');
+      summaryContent.textContent = lastSummary.summary;
+      summaryContainer.classList.remove('hidden');
+    } else {
+      console.log('[Summora Popup] Saved summary is for a different video');
+    }
+
+  } catch (error) {
+    console.error('[Summora Popup] Error loading saved summary:', error);
+  }
+}
+
+/**
  * Handle summarize button click
  */
 async function handleSummarize() {
@@ -144,6 +177,7 @@ async function handleSummarize() {
   console.log('[Summora Popup] Setting loading state...');
   setLoading(true);
   summaryContainer.classList.add('hidden');
+  summaryContent.textContent = ''; // Clear previous summary
   hideStatus();
 
   try {
@@ -211,10 +245,27 @@ async function handleSummarize() {
 /**
  * Display summary in UI
  */
-function displaySummary(summary, videoTitle) {
+async function displaySummary(summary, videoTitle) {
   summaryContent.textContent = summary;
   summaryContainer.classList.remove('hidden');
   showStatus('Summary generated successfully!', 'success');
+
+  // Save summary to storage so it persists when popup closes
+  if (currentTab && currentTab.url) {
+    try {
+      await chrome.storage.local.set({
+        lastSummary: {
+          summary: summary,
+          videoTitle: videoTitle,
+          videoUrl: currentTab.url,
+          timestamp: Date.now()
+        }
+      });
+      console.log('[Summora Popup] Summary saved to storage');
+    } catch (error) {
+      console.error('[Summora Popup] Failed to save summary:', error);
+    }
+  }
 }
 
 /**

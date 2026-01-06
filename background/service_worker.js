@@ -106,6 +106,27 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
  */
 async function handleSummarize(transcript, videoTitle) {
   try {
+    // Check cache first - if we already have a summary for this exact transcript, return it
+    console.log('[Summora SW] Checking cache...');
+    const transcriptHash = simpleHash(transcript);
+    const cacheKey = `summary_cache_${transcriptHash}`;
+
+    const cachedData = await chrome.storage.local.get([cacheKey]);
+    if (cachedData[cacheKey]) {
+      const cached = cachedData[cacheKey];
+      const cacheAge = Date.now() - cached.timestamp;
+      const maxAge = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+      if (cacheAge < maxAge) {
+        console.log('[Summora SW] ✅ Found cached summary (age:', Math.round(cacheAge / 1000 / 60), 'minutes)');
+        return { success: true, summary: cached.summary, videoTitle: videoTitle };
+      } else {
+        console.log('[Summora SW] Cached summary expired, generating new one');
+      }
+    } else {
+      console.log('[Summora SW] No cached summary found');
+    }
+
     console.log('[Summora SW] Loading settings...');
     // Load user settings
     const settings = await chrome.storage.sync.get(['provider', 'openaiKey', 'claudeKey', 'geminiKey']);
@@ -163,6 +184,19 @@ async function handleSummarize(transcript, videoTitle) {
     console.log('[Summora SW] Provider response:', result.success ? 'SUCCESS' : 'FAILED');
     if (result.success) {
       console.log('[Summora SW] Summary length:', result.summary?.length, 'characters');
+
+      // Cache the successful result
+      try {
+        const cacheData = {
+          summary: result.summary,
+          timestamp: Date.now()
+        };
+        await chrome.storage.local.set({ [cacheKey]: cacheData });
+        console.log('[Summora SW] Summary cached for future use');
+      } catch (cacheError) {
+        console.warn('[Summora SW] Failed to cache summary:', cacheError.message);
+        // Don't fail the request if caching fails
+      }
     } else {
       console.error('[Summora SW] Provider error:', result.error);
     }
@@ -232,6 +266,21 @@ chrome.runtime.onInstalled.addListener((details) => {
     console.log('[Summora SW] Extension updated');
   }
 });
+
+/**
+ * Simple hash function for caching
+ * @param {string} str - String to hash
+ * @returns {string} Hash string
+ */
+function simpleHash(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  return Math.abs(hash).toString(36);
+}
 
 console.log('[Summora SW] ========================================');
 console.log('[Summora SW] ✅ Service worker fully initialized and ready');

@@ -77,22 +77,26 @@ async function checkYouTubePage() {
       return;
     }
 
-    // Send message to content script to verify
-    chrome.tabs.sendMessage(tab.id, { action: 'CHECK_YOUTUBE_PAGE' }, (response) => {
-      if (chrome.runtime.lastError) {
-        // Content script not loaded yet, try to inject
-        injectContentScript(tab.id);
-        return;
-      }
+    // Send message to content script to verify - convert to Promise
+    return new Promise((resolve) => {
+      chrome.tabs.sendMessage(tab.id, { action: 'CHECK_YOUTUBE_PAGE' }, (response) => {
+        if (chrome.runtime.lastError) {
+          // Content script not loaded yet, try to inject
+          injectContentScript(tab.id);
+          resolve();
+          return;
+        }
 
-      isYouTubePage = response?.isYouTube || false;
-      if (isYouTubePage) {
-        notYouTubeMessage.classList.add('hidden');
-        mainContent.classList.remove('hidden');
-      } else {
-        notYouTubeMessage.classList.remove('hidden');
-        mainContent.classList.add('hidden');
-      }
+        isYouTubePage = response?.isYouTube || false;
+        if (isYouTubePage) {
+          notYouTubeMessage.classList.add('hidden');
+          mainContent.classList.remove('hidden');
+        } else {
+          notYouTubeMessage.classList.remove('hidden');
+          mainContent.classList.add('hidden');
+        }
+        resolve();
+      });
     });
 
   } catch (error) {
@@ -122,24 +126,34 @@ async function injectContentScript(tabId) {
  */
 async function loadSavedSummary() {
   try {
+    console.log('[Summora Popup] loadSavedSummary called');
+    console.log('[Summora Popup] currentTab:', currentTab?.url);
+    console.log('[Summora Popup] isYouTubePage:', isYouTubePage);
+
     if (!currentTab || !currentTab.url || !isYouTubePage) {
+      console.log('[Summora Popup] Skipping summary load - not on YouTube page');
       return;
     }
 
     const { lastSummary } = await chrome.storage.local.get(['lastSummary']);
 
     if (!lastSummary) {
-      console.log('[Summora Popup] No saved summary found');
+      console.log('[Summora Popup] No saved summary found in storage');
       return;
     }
 
+    console.log('[Summora Popup] Found saved summary for:', lastSummary.videoUrl);
+    console.log('[Summora Popup] Current video:', currentTab.url);
+
     // Check if the saved summary is for the current video
     if (lastSummary.videoUrl === currentTab.url) {
-      console.log('[Summora Popup] Found saved summary for current video');
+      console.log('[Summora Popup] ✅ Restoring saved summary');
       summaryContent.textContent = lastSummary.summary;
       summaryContainer.classList.remove('hidden');
     } else {
-      console.log('[Summora Popup] Saved summary is for a different video');
+      console.log('[Summora Popup] Saved summary is for a different video, clearing display');
+      summaryContainer.classList.add('hidden');
+      summaryContent.textContent = '';
     }
 
   } catch (error) {

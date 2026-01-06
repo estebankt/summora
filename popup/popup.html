@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Summora</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <!-- Main View -->
+  <div id="mainView" class="view">
+    <header>
+      <h1>Summora</h1>
+      <button id="settingsBtn" class="icon-btn" title="Settings">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M17.5 10.833a1.667 1.667 0 01-.833 1.442l-.834.5a1.667 1.667 0 00-.833 1.442v1a1.667 1.667 0 01-1.667 1.666h-1a1.667 1.667 0 00-1.441.834l-.5.833A1.667 1.667 0 018.95 18.333a1.667 1.667 0 01-1.442-.833l-.5-.834A1.667 1.667 0 005.567 16h-1A1.667 1.667 0 012.9 14.333v-1a1.667 1.667 0 00-.834-1.441l-.833-.5A1.667 1.667 0 01.4 10a1.667 1.667 0 01.833-1.442l.834-.5A1.667 1.667 0 002.9 6.617v-1A1.667 1.667 0 014.567 4h1a1.667 1.667 0 001.441-.833l.5-.834A1.667 1.667 0 018.95 1.5a1.667 1.667 0 011.442.833l.5.834A1.667 1.667 0 0012.333 4h1A1.667 1.667 0 0115 5.667v1a1.667 1.667 0 00.833 1.441l.834.5A1.667 1.667 0 0117.5 10z" stroke="currentColor" stroke-width="1.5"/>
+        </svg>
+      </button>
+    </header>
+
+    <div id="statusMessage" class="status-message hidden"></div>
+
+    <div id="notYouTubeMessage" class="warning-message hidden">
+      <p>⚠️ Please open a YouTube video to use Summora</p>
+    </div>
+
+    <div id="mainContent">
+      <button id="summarizeBtn" class="primary-btn">
+        <span id="summarizeBtnText">Summarize Video</span>
+        <span id="summarizeLoader" class="loader hidden"></span>
+      </button>
+
+      <div id="summaryContainer" class="summary-container hidden">
+        <div class="summary-header">
+          <h3>Summary</h3>
+          <button id="copySummaryBtn" class="copy-btn" title="Copy to clipboard">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <rect x="5" y="5" width="9" height="9" rx="1" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M3 10.5V3.5A1.5 1.5 0 014.5 2h7" stroke="currentColor" stroke-width="1.5"/>
+            </svg>
+          </button>
+        </div>
+        <div id="summaryContent" class="summary-content"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings View -->
+  <div id="settingsView" class="view hidden">
+    <header>
+      <button id="backBtn" class="icon-btn" title="Back">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M12.5 15l-5-5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <h1>Settings</h1>
+    </header>
+
+    <div class="settings-content">
+      <div class="form-group">
+        <label for="providerSelect">AI Provider</label>
+        <select id="providerSelect" class="form-control">
+          <option value="openai">OpenAI (GPT-4)</option>
+          <option value="claude">Anthropic (Claude)</option>
+          <option value="gemini">Google (Gemini)</option>
+        </select>
+        <p class="help-text">Choose your preferred AI provider</p>
+      </div>
+
+      <div id="openaiSettings" class="provider-settings">
+        <div class="form-group">
+          <label for="openaiKey">OpenAI API Key</label>
+          <input type="password" id="openaiKey" class="form-control" placeholder="sk-...">
+          <p class="help-text">Get your key from <a href="https://platform.openai.com/api-keys" target="_blank">OpenAI Platform</a></p>
+        </div>
+      </div>
+
+      <div id="claudeSettings" class="provider-settings hidden">
+        <div class="form-group">
+          <label for="claudeKey">Claude API Key</label>
+          <input type="password" id="claudeKey" class="form-control" placeholder="sk-ant-...">
+          <p class="help-text">Get your key from <a href="https://console.anthropic.com/" target="_blank">Anthropic Console</a></p>
+        </div>
+      </div>
+
+      <div id="geminiSettings" class="provider-settings hidden">
+        <div class="form-group">
+          <label for="geminiKey">Gemini API Key</label>
+          <input type="password" id="geminiKey" class="form-control" placeholder="AIza...">
+          <p class="help-text">Get your key from <a href="https://makersuite.google.com/app/apikey" target="_blank">Google AI Studio</a></p>
+        </div>
+      </div>
+
+      <div id="settingsStatus" class="status-message hidden"></div>
+
+      <div class="button-group">
+        <button id="saveSettingsBtn" class="primary-btn">Save Settings</button>
+      </div>
+
+      <div class="info-box">
+        <h4>About Summora</h4>
+        <p>Version 1.0.0</p>
+        <p class="small-text">Your API keys are stored locally and never shared. All summarization happens directly between your browser and your chosen AI provider.</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
